@@ -1,0 +1,306 @@
+---
+title: 'R Graphics Cookbook: Chapter 3'
+author: "Brandon Foltz"
+date: "2023-03-19"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(gcookbook)
+```
+
+```{r}
+ggplot(pg_mean, aes(x = group, y = weight)) +
+  geom_col()
+```
+
+```{r}
+ggplot(BOD,
+       aes(x = Time, y = demand)) +
+  geom_col()
+
+ggplot(BOD,
+       aes(x = factor(Time), y = demand)) +
+  geom_col()
+```
+```{r}
+ggplot(pg_mean,
+       aes(x = group, y = weight)) +
+  geom_col(fill = "lightblue", color = "black")
+```
+ Grouping Bars Together
+ 
+```{r}
+#cabbage_exp
+
+ggplot(cabbage_exp,
+       aes(x = Date, y = Weight, fill = Cultivar)) +
+  geom_col(position = "dodge")
+```
+```{r}
+ggplot(cabbage_exp,
+       aes(x = Date, y = Weight, fill = Cultivar)) +
+  geom_col(position = "dodge", color = "black") +
+  scale_fill_brewer(palette = "Pastel1")
+```
+```{r}
+#Removing the last observation makes the final bar fill the gap becuase there is no combination there.
+ce <- cabbage_exp[1:5, ]
+
+ggplot(ce,
+       aes(x = Date, y = Weight, fill = Cultivar)) +
+  geom_col(position = "dodge", color = "black") +
+  scale_fill_brewer(palette = "Pastel1")
+```
+
+Bar Graph of Counts
+```{r}
+# Don't pass anything to y. If x is continuous, it will bin. If nominal, it will count in each group.
+ggplot(diamonds, aes(x = cut)) +
+  geom_bar()
+```
+
+Using Colors in a Bar Graph
+```{r}
+upc <- uspopchange|>
+  arrange(desc(Change))|>
+  slice(1:10)
+#upc
+
+ggplot(upc,
+       aes(x = Abb, y = Change, fill = Region)) +
+  geom_col()
+
+ggplot(upc,
+       aes(x = reorder(Abb, Change), y = Change, fill = Region)) +
+  geom_col(color = "black") +
+  scale_fill_manual(values = c("#669933", "#FFCC66")) +
+  xlab("State")
+```
+
+Coloring Negative and Positive Colors Differently
+```{r}
+climate_sub <- climate|>
+  filter(Source == "Berkeley" & Year >= 1900)|>
+  mutate(pos = Anomaly10y >= 0)
+
+ggplot(climate_sub,
+       aes(x = Year, y = Anomaly10y, fill = pos)) +
+  geom_col(position = "identity")
+```
+```{r}
+ggplot(climate_sub,
+       aes(x = Year, y = Anomaly10y, fill = pos)) +
+  geom_col(position = "identity", color = "black", size = 0.25) +
+  scale_fill_manual(values = c("#CCEEFF", "#FFDDDD"), guide = "none")
+```
+
+Adjusting Bar Width and Spacing
+```{r}
+ggplot(pg_mean, aes(x = group, y = weight)) +
+  geom_col()
+
+ggplot(pg_mean, aes(x = group, y = weight)) +
+  geom_col(width = 0.5)
+```
+```{r}
+ggplot(cabbage_exp, aes(x = Date, y = Weight, fill = Cultivar)) +
+  geom_col(width = 0.5, position = "dodge")
+
+#set a different dodge value
+ggplot(cabbage_exp, aes(x = Date, y = Weight, fill = Cultivar)) +
+  geom_col(width = 0.5, position = position_dodge(0.7))
+```
+```{r}
+# all create the same thing
+# geom_bar(position = "dodge")
+# geom_bar(width = 0.9, position = position_dodge())
+# geom_bar(position = position_dodge(0.9))
+# geom_bar(width = 0.9, position = position_dodge(width=0.9))
+```
+
+Stacked Bar Graph
+```{r}
+ggplot(cabbage_exp, aes(x = Date, y = Weight, fill = Cultivar)) +
+  geom_col()
+
+ggplot(cabbage_exp, aes(x = Date, y = Weight, fill = Cultivar)) +
+  geom_col() +
+  guides(fill = guide_legend(reverse = TRUE))
+
+ggplot(cabbage_exp, aes(x = Date, y = Weight, fill = Cultivar)) +
+  geom_col(position = position_stack(reverse = TRUE)) +
+  guides(fill = guide_legend(reverse = TRUE))
+
+ggplot(cabbage_exp, aes(x = Date, y = Weight, fill = Cultivar)) +
+  geom_col(color = "black") +
+  scale_fill_brewer(palette = "Pastel1")
+```
+
+Proportional Stacked Bar Graph
+
+```{r}
+ggplot(cabbage_exp, aes(x = Date, y = Weight, fill = Cultivar)) +
+  geom_col(position = "fill")
+
+ggplot(cabbage_exp, aes(x = Date, y = Weight, fill = Cultivar)) +
+  geom_col(position = "fill") +
+  scale_y_continuous(labels = scales::percent)
+
+ggplot(cabbage_exp, aes(x = Date, y = Weight, fill = Cultivar)) +
+  geom_col(color = "black", position = "fill") +
+  scale_y_continuous(labels = scales::percent) +
+  scale_fill_brewer(palette = "Pastel1")
+```
+```{r}
+ce <- cabbage_exp|>
+  group_by(Date)|>
+  mutate(percent_weight = Weight / sum(Weight) * 100)
+ce
+```
+```{r}
+ggplot(ce, aes(x = Date, y = percent_weight, fill = Cultivar)) +
+  geom_col()
+```
+
+Adding labels to a Bar Graph
+
+```{r}
+# below the top
+ggplot(cabbage_exp, aes(x = interaction(Date, Cultivar), y = Weight)) +
+  geom_col() +
+  geom_text(aes(label = Weight), vjust = 1.5, color = "white")
+
+#above the top
+ggplot(cabbage_exp, aes(x = interaction(Date, Cultivar), y = Weight)) +
+  geom_col() +
+  geom_text(aes(label = Weight, vjust = -0.2))
+```
+
+```{r}
+ggplot(mtcars, aes(x = factor(cyl))) +
+  geom_bar() +
+  geom_text(aes(label = ..count..), stat = "count", vjust = 1.5, color = "white")
+```
+
+```{r}
+ggplot(cabbage_exp, aes(x = interaction(Date, Cultivar), y = Weight)) +
+  geom_col() +
+  geom_text(aes(label = Weight), vjust = -0.2) +
+  ylim(0, max(cabbage_exp$Weight) * 1.05)
+
+ggplot(cabbage_exp, aes(x = interaction(Date, Cultivar), y = Weight)) +
+  geom_col() +
+  geom_text(aes(y = Weight + 0.1, label = Weight))
+```
+```{r}
+ggplot(cabbage_exp, aes(x = Date, y = Weight, fill = Cultivar)) +
+  geom_col(position = "dodge") +
+  geom_text(
+    aes(label = Weight),
+    color = "white", size = 3,
+    vjust = 1.5, position = position_dodge(0.9)
+  )
+```
+```{r}
+ce <- cabbage_exp|>
+  arrange(Date, rev(Cultivar))
+
+# get the cumulative sum
+
+ce <- ce|>
+  group_by(Date)|>
+  mutate(label_y = cumsum(Weight))
+ce
+
+ggplot(ce, aes(x = Date, y = Weight, fill = Cultivar)) +
+  geom_col() +
+  geom_text(aes(y = label_y, label = Weight), vjust = 1.5, color = "white")
+```
+```{r}
+ce <- cabbage_exp|>
+  arrange(Date, rev(Cultivar))
+
+ce <- ce|>
+  group_by(Date)|>
+  mutate(label_y = cumsum(Weight) - 0.5 * Weight)
+
+ggplot(ce,
+       aes(x = Date, y = Weight, fill = Cultivar)) +
+  geom_col() +
+  geom_text(aes(y = label_y, label = Weight), color = "white")
+```
+
+```{r}
+ggplot(ce,
+       aes(x = Date, y = Weight, fill = Cultivar)) +
+  geom_col(color = "black") +
+  geom_text(aes(y = label_y, label = paste(format(Weight, nsmall = 2), "kg")), size = 4) +
+  scale_fill_brewer(palette = "Pastel1")
+```
+
+Cleveland Dot Plot
+
+```{r}
+tophit <- tophitters2001[1:25, ]
+
+ggplot(tophit, aes(x = avg, y = name)) +
+  geom_point()
+
+ggplot(tophit,
+       aes(x = avg, y = reorder(name, avg))) +
+  geom_point(size = 3) +
+  theme_bw() +
+  theme(
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank(),
+    panel.grid.major.y = element_line(color = "grey60", linetype = "dashed")
+  )
+
+# Flip Axes
+
+ggplot(tophit,
+       aes(x = reorder(name, avg), y = avg)) +
+  geom_point(size = 3) +
+  theme_bw() +
+  theme(
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    panel.grid.major.x = element_line(color = "grey60", linetype = "dashed"),
+    axis.text.x = element_text(angle = 60, hjust = 1)
+  )
+```
+Second variable ordering
+```{r}
+nameorder <- tophit$name[order(tophit$lg, tophit$avg)]
+
+tophit$name <- factor(tophit$name, levels = nameorder)
+
+ggplot(tophit,
+       aes(x = avg, y = name)) +
+  geom_segment(aes(yend = name), xend = 0, color = "grey50") +
+  geom_point(size = 3, aes(color = lg)) +
+  scale_color_brewer(palette = "Set1", limits = c("NL", "AL")) +
+  theme_bw() +
+  theme(
+    panel.grid.major.y = element_blank(),
+    legend.position = c(1, 0.55),
+    legend.justification = c(1, 0.5)
+  )
+``` 
+
+Using facets
+
+```{r}
+ggplot(tophit,
+       aes(x = avg, y = name)) +
+  geom_segment(aes(yend = name), xend = 0, color = "grey50") +
+  geom_point(size = 3, aes(color = lg)) +
+  scale_color_brewer(palette = "Set1", limits = c("NL", "AL"), guide = FALSE) +
+  theme_bw() +
+  theme(panel.grid.major.y = element_blank()) +
+  facet_grid(lg ~ ., scales = "free_y", space = "free_y")
+```
+

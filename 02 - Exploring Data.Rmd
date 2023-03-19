@@ -1,0 +1,114 @@
+---
+title: 'R Graphics Cookbook: Chapter 2'
+author: "Brandon Foltz"
+date: "2023-03-19"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+Scatter charts
+```{r}
+plot(mtcars$wt, mtcars$mpg)
+
+ggplot(mtcars,
+       aes(x = wt, y = mpg)) +
+  geom_point()
+```
+
+Line charts
+```{r}
+plot(pressure$temperature, pressure$pressure, type = "l")
+points(pressure$temperature, pressure$pressure)
+lines(pressure$temperature, pressure$pressure/2, col = "red")
+points(pressure$temperature, pressure$pressure/2, col = "red")
+```
+```{r}
+ggplot(pressure,
+       aes(temperature, pressure)) +
+  geom_line() +
+  geom_point(color = "red") +
+  geom_line(aes(x = temperature, y = pressure/2)) +
+  geom_point(aes(x = temperature, y = pressure/2), color = "blue")
+```
+
+Bar Graph
+
+```{r}
+barplot(BOD$demand, names.arg = BOD$Time)
+```
+```{r}
+table(mtcars$cyl)
+barplot(table(mtcars$cyl))
+```
+
+```{r}
+ggplot(BOD,
+       aes(x = Time, y = demand)) +
+  geom_col()
+
+# Convert the x variable to a factor, so that it is treated as discrete. Note the missing column for 6. By default, R will not plot a factor with a zero count.
+
+ggplot(BOD,
+       aes(x = factor(Time), y = demand)) +
+  geom_col()
+```
+```{r}
+ggplot(mtcars,
+       aes(x = cyl)) +
+  geom_bar()
+
+ggplot(mtcars, aes(x = factor(cyl))) +
+  geom_bar()
+```
+
+Histograms
+```{r}
+hist(mtcars$mpg)
+hist(mtcars$mpg, breaks = 10)
+```
+```{r}
+ggplot(mtcars,
+       aes(mpg)) +
+  geom_histogram()
+
+ggplot(mtcars, aes(mpg)) + geom_histogram(binwidth = 4)
+```
+
+Boxplots
+```{r}
+plot(ToothGrowth$supp, ToothGrowth$len)
+boxplot(len ~ supp, data = ToothGrowth)
+#Interactions
+boxplot(len ~ supp + dose, data = ToothGrowth)
+```
+```{r}
+ggplot(ToothGrowth,
+       aes(supp, len)) +
+  geom_boxplot()
+
+ggplot(ToothGrowth,
+       aes(x = interaction(supp, dose), y = len)) +
+  geom_boxplot()
+```
+
+# Plotting a function
+
+```{r}
+# Plot a user-defined function
+myfun <- function(xvar) {
+  1 / (1 + exp(-xvar + 10))
+}
+curve(myfun(x), from = 0, to = 20)
+# Add a line:
+curve(1 - myfun(x), add = TRUE, col = "red")
+```
+
+```{r}
+ggplot(data.frame(x = c(0, 20)), aes(x = x)) +
+  stat_function(fun = myfun, geom = "line")
+```
+
