@@ -1,0 +1,513 @@
+---
+title: 'R Graphics Cookbook: Chapter 5'
+author: "Brandon Foltz"
+date: "2023-03-19"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(gcookbook)
+library(hexbin)
+library(MASS)
+library(ggrepel)
+```
+```{r}
+heightweight|>
+  select(ageYear, heightIn)
+
+ggplot(heightweight, aes(x = ageYear, y = heightIn)) +
+  geom_point()
+
+ggplot(heightweight, aes(x = ageYear, y = heightIn)) +
+  geom_point(shape = 21)
+
+ggplot(heightweight, aes(x = ageYear, y = heightIn, color = sex, shape = sex)) +
+  geom_point() +
+  geom_smooth()
+
+ggplot(heightweight, aes(x = ageYear, y = heightIn, shape = sex, color = sex)) +
+  geom_point() +
+  scale_shape_manual(values = c(1,2)) +
+  scale_color_brewer(palette = "Set1")
+```
+
+```{r}
+ggplot(heightweight, aes(x = ageYear, y = heightIn)) +
+  geom_point(shape = 3)
+
+ggplot(heightweight, aes(x = ageYear, y = heightIn, shape = sex)) +
+  geom_point(size = 3) +
+  scale_shape_manual(values = c(1,4))
+```
+
+```{r}
+hw <- heightweight|>
+  mutate(weightgroup = ifelse(weightLb < 100, "< 100", ">=100"))
+
+ggplot(hw, aes(x = ageYear, y = heightIn, shape = sex, fill = weightgroup)) +
+  geom_point(size = 2.5) +
+  scale_shape_manual(values = c(21,24)) +
+  scale_fill_manual(
+    values = c(NA, "black"),
+    guide = guide_legend(override.aes = list(shape = 21))
+  )
+```
+Mapping to Continuous Variable
+```{r}
+ggplot(heightweight, aes(x = ageYear, y = heightIn, color = weightLb)) + geom_point()
+
+ggplot(heightweight, aes(x = ageYear, y = heightIn, size = weightLb)) +
+  geom_point()
+```
+Correct Proportions
+
+```{r}
+size_range <- range(heightweight$weightLb) / max(heightweight$weightLb) * 6
+size_range
+
+ggplot(heightweight, aes(x = ageYear, y = heightIn, size = weightLb)) +
+  geom_point() +
+  scale_size_continuous(range = size_range)
+
+ggplot(heightweight, aes(x = ageYear, y = heightIn, size = weightLb)) +
+  geom_point() +
+  scale_size_area()
+```
+
+```{r}
+ggplot(heightweight, aes(x = ageYear, y = heightIn, color = sex, size = weightLb)) +
+  geom_point(alpha = 0.3) +
+  scale_color_brewer(palette = "Set1")
+  scale_size_area()
+```
+Overplotting
+```{r}
+# We'll use the diamonds data set and create a base plot called `diamonds_sp`
+diamonds_sp <- ggplot(diamonds, aes(x = carat, y = price))
+
+diamonds_sp +
+  geom_point()
+```
+```{r}
+diamonds_sp + stat_bin2d()
+diamonds_sp + stat_bin2d(bins = 50) +
+  scale_fill_gradient(low = "lightblue", high = "red", limits = c(0, 6000))
+```
+
+```{r}
+diamonds_sp + stat_binhex() +
+  scale_fill_gradient(low = "lightblue", high = "orange", limits = c(0, 8000))
+
+diamonds_sp + stat_binhex() +
+  scale_fill_gradient(low = "lightblue", high = "orange", limits = c(0, 5000))
+```
+ Discrete jittering
+ 
+```{r}
+cw_sp <- ggplot(ChickWeight, aes(x = Time, y = weight))
+
+cw_sp + geom_point()
+cw_sp + geom_point(position = "jitter")
+cw_sp + geom_point(position = position_jitter(width = 0.5, height = 0))
+```
+
+Boxplots 
+```{r}
+cw_sp +
+  geom_boxplot(aes(group = Time))
+
+cw_sp +
+  geom_boxplot()
+```
+
+Adding Regression Lines
+```{r}
+hw_sp <- ggplot(heightweight, aes(x = ageYear, y = heightIn))
+
+hw_sp +
+  geom_point() +
+  stat_smooth(method = "lm")
+
+hw_sp +
+  geom_point() +
+  stat_smooth(method = lm, level = 0.99)
+
+hw_sp +
+  geom_point() +
+  stat_smooth(method = lm, se = FALSE)
+
+hw_sp +
+  geom_point(color = "grey60") +
+  stat_smooth(method = lm, se = FALSE, color = "black")
+```
+
+LOESS
+```{r}
+hw_sp +
+  geom_point(color = "grey60") +
+  stat_smooth()
+
+hw_sp +
+  geom_point(color = "grey60") +
+  stat_smooth(method = loess)
+```
+
+Logistic Regression
+```{r}
+biopsy_mod <- biopsy|>
+  mutate(classn = recode(class, benign = 0, malignant = 1))
+biopsy_mod
+```
+```{r}
+ggplot(biopsy_mod, aes(x = V1, y = classn)) +
+  geom_point(
+    position = position_jitter(width = 0.3, height = 0.06),
+    alpha = 0.4,
+    shape = 21,
+    size = 1.5
+  ) +
+  stat_smooth(method = glm, method.args = list(family = binomial))
+```
+
+```{r}
+hw_sp <- ggplot(heightweight, aes(x = ageYear, y = heightIn, color = sex)) +
+  geom_point() +
+  scale_color_brewer(palette = "Set1")
+
+hw_sp +
+  geom_smooth()
+
+hw_sp +
+  geom_smooth(method = lm, se = FALSE, fullrange = TRUE)
+```
+Model fitted
+```{r}
+model <- lm(heightIn ~ ageYear + I(ageYear^2), heightweight)
+summary(model)
+
+xmin <- min(heightweight$ageYear)
+xmax <- max(heightweight$ageYear)
+
+predicted <- data.frame(ageYear = seq(xmin, xmax, length.out = 100))
+
+predicted$heightIn <- predict(model, predicted)
+predicted
+```
+```{r}
+hw_sp <- ggplot(heightweight, aes(x = ageYear, y = heightIn)) +
+  geom_point(color = "grey40")
+
+hw_sp +
+  geom_line(data = predicted, size = 1)
+```
+Easier way
+```{r}
+# Given a model, predict values of yvar from xvar
+# This function supports one predictor and one predicted variable
+# xrange: If NULL, determine the x range from the model object. If a vector with
+#   two numbers, use those as the min and max of the prediction range.
+# samples: Number of samples across the x range.
+# ...: Further arguments to be passed to predict()
+predictvals <- function(model, xvar, yvar, xrange = NULL, samples = 100, ...) {
+
+  # If xrange isn't passed in, determine xrange from the models.
+  # Different ways of extracting the x range, depending on model type
+  if (is.null(xrange)) {
+    if (any(class(model) %in% c("lm", "glm")))
+      xrange <- range(model$model[[xvar]])
+    else if (any(class(model) %in% "loess"))
+      xrange <- range(model$x)
+  }
+
+  newdata <- data.frame(x = seq(xrange[1], xrange[2], length.out = samples))
+  names(newdata) <- xvar
+  newdata[[yvar]] <- predict(model, newdata = newdata, ...)
+  newdata
+}
+```
+
+```{r}
+modlinear <- lm(heightIn ~ ageYear, heightweight)
+modloess <- loess(heightIn ~ ageYear, heightweight)
+
+lm_predicted <- predictvals(modlinear, "ageYear", "heightIn")
+loess_predicted <- predictvals(modloess, "ageYear", "heightIn")
+
+hw_sp +
+  geom_line(data = lm_predicted, color = "orange", size = 0.8) +
+  geom_line(data = loess_predicted, color = "blue", size = 0.8)
+```
+Logistic predictions
+
+```{r}
+biopsy_mod  <- biopsy |>
+  mutate(classn = recode(class, benign = 0, malignant = 1))
+#biopsy_mod
+
+fitlogistic <- glm(classn ~ V1, biopsy_mod, family = binomial)
+
+glm_predicted <- predictvals(fitlogistic, "V1", "classn", type = "response")
+
+ggplot(biopsy_mod, aes(x = V1, y = classn)) +
+  geom_point(
+    position = position_jitter(width = 0.3, height = 0.08),
+    alpha = 0.4,
+    shape = 21,
+    size = 1.5
+  ) +
+  geom_line(data = glm_predicted, color = "#1177FF", size = 1)
+```
+
+Multiple Models
+```{r}
+models <- heightweight|>
+  group_by(sex)|>
+  do(model = lm(heightIn ~ ageYear, .))|>
+  ungroup()
+
+#models$model
+
+predvals <- models|>
+  group_by(sex)|>
+  do(predictvals(.$model[[1]], xvar = "ageYear", yvar = "heightIn"))
+
+ggplot(heightweight, aes(x = ageYear, y = heightIn, color = sex)) +
+  geom_point() +
+  geom_line(data = predvals)
+
+ggplot(heightweight, aes(x = ageYear, y = heightIn)) +
+  geom_point() +
+  geom_line(data = predvals) +
+  facet_grid(. ~ sex)
+```
+Same x axis
+
+```{r}
+predvals <- models|>
+  group_by(sex)|>
+  do(predictvals(
+    .$model[[1]],
+    xvar = "ageYear",
+    yvar = "heightIn",
+    xrange = range(heightweight$ageYear))
+  )
+
+ggplot(heightweight, aes(x = ageYear, y = heightIn, color = sex)) +
+  geom_point() +
+  geom_line(data = predvals)
+```
+
+Annotations
+
+```{r}
+model <- lm(heightIn ~ ageYear, heightweight)
+summary(model)
+```
+```{r}
+pred <- predictvals(model, "ageYear", "heightIn")
+
+hw_sp <- ggplot(heightweight, aes(x = ageYear, y = heightIn)) +
+  geom_point() +
+  geom_line(data = pred)
+
+hw_sp + annotate("text", x = 16.5, y = 52, label = "r^2 == 0.42", parse = TRUE)
+
+eqn <- sprintf(
+  "italic(y) == %.3g + %.3g * italic(x) * ',' ~~ italic(r)^2 ~ '=' ~ %.2g",
+  coef(model)[1],
+  coef(model)[2],
+  summary(model)$r.squared
+)
+
+eqn
+parse(text = eqn)
+
+hw_sp +
+  annotate(
+    "text",
+    x = Inf, y = -Inf,
+    label = eqn, parse = TRUE,
+    hjust = 1.1, vjust = -.5
+  )
+```
+
+Marginal Rugs
+
+```{r}
+ggplot(faithful, aes(x = eruptions, y = waiting)) +
+  geom_point() +
+  geom_rug()
+
+#fix overplotting
+
+ggplot(faithful, aes(x = eruptions, y = waiting)) +
+  geom_point() +
+  geom_rug(position = "jitter", size = 0.2)
+```
+
+Annotating Points
+
+```{r}
+countries_sub <- countries|>
+  filter(Year == 2009 & healthexp > 2000)
+
+countries_sp <- ggplot(countries_sub, aes(x = healthexp, y = infmortality)) +
+  geom_point()
+
+countries_sp +
+  annotate("text", x = 4350, y = 5.4, label = "Canada") +
+  annotate("text", x = 7400, y = 6.8, label = "USA")
+
+countries_sp +
+  geom_text(aes(label = Name), size = 3)
+
+countries_sp +
+  geom_point() +
+  geom_text(aes(label = Name), size = 3)
+```
+```{r}
+countries_sp +
+  geom_text_repel(aes(label = Name), size = 3)
+
+countries_sp +
+  geom_label_repel(aes(label = Name), size = 2)
+
+countries_sp +
+  geom_text(aes(label = Name), size = 3, vjust = 0)
+
+countries_sp +
+  geom_text(aes(y = infmortality + .1, label = Name), size = 3)
+
+countries_sp +
+  geom_text(
+    aes(label = Name),
+    size = 3,
+    hjust = 0
+  )
+
+countries_sp +
+  geom_text(
+    aes(x = healthexp + 100, label = Name),
+    size = 3,
+    hjust = 0
+  )
+```
+```{r}
+cdat <- countries %>%
+  filter(Year == 2009, healthexp > 2000) %>%
+  mutate(plotname = as.character(Name))
+
+countrylist <- c("Canada", "Ireland", "United Kingdom", "United States",
+  "New Zealand", "Iceland", "Japan", "Luxembourg", "Netherlands", "Switzerland")
+
+cdat <- cdat |>
+  mutate(plotname = ifelse(plotname %in% countrylist, plotname, ""))
+
+cdat|>
+  select(Name, plotname)
+
+ggplot(cdat,
+       aes(x = healthexp, y = infmortality)) +
+  geom_point() +
+  geom_text(aes(x = healthexp + 100, label = plotname), size = 4, hjust = 0) +
+  xlim(2000, 10000)
+```
+
+```{r}
+countrylist <- c("Canada", "Ireland", "United Kingdom", "United States",
+  "New Zealand", "Iceland", "Japan", "Luxembourg", "Netherlands", "Switzerland")
+
+cdat <- countries|>
+  filter(Year == 2009, Name %in% countrylist)
+cdat
+
+cdat_sp <- ggplot(cdat, aes(x = healthexp, y = infmortality, size = GDP)) +
+  geom_point(shape = 21, color = "black", fill = "cornsilk")
+
+cdat_sp
+
+cdat_sp + scale_size_area(max_size = 15)
+```
+
+```{r}
+hec <- HairEyeColor|>
+  as_tibble()|>
+  group_by(Hair, Eye)|>
+  summarise(count = sum(n))
+
+hec_sp <- ggplot(hec, aes(x = Eye, y = Hair)) +
+  geom_point(aes(size = count), shape = 21, color = "black", fill = "cornsilk") +
+  scale_size_area(max_size = 20, guide = FALSE) +
+  geom_text(aes(
+    y = as.numeric(as.factor(Hair)) - sqrt(count)/34, label = count),
+    vjust = 1.3,
+    color = "grey60",
+    size =  4
+  )
+
+hec_sp
+
+hec_sp + geom_point(aes(y = as.numeric(as.factor(Hair)) - sqrt(count)/34, color = "red", size = 1))
+```
+
+Scatter plot matrix
+```{r}
+c2009 <- countries|>
+  filter(Year == 2009)|>
+  select(Name, GDP, laborrate, healthexp, infmortality)
+#c2009
+
+c2009_num <- select(c2009, -Name)
+pairs(c2009_num)
+```
+```{r}
+panel.cor <- function(x, y, digits = 2, prefix = "", cex.cor, ...) {
+  usr <- par("usr")
+  on.exit(par(usr))
+  par(usr = c(0, 1, 0, 1))
+  r <- abs(cor(x, y, use = "complete.obs"))
+  txt <- format(c(r, 0.123456789), digits = digits)[1]
+  txt <- paste(prefix, txt, sep = "")
+  if (missing(cex.cor)) cex.cor <- 0.8/strwidth(txt)
+  text(0.5, 0.5, txt, cex =  cex.cor * (1 + r) / 2)
+}
+
+panel.hist <- function(x, ...) {
+  usr <- par("usr")
+  on.exit(par(usr))
+  par(usr = c(usr[1:2], 0, 1.5) )
+  h <- hist(x, plot = FALSE)
+  breaks <- h$breaks
+  nB <- length(breaks)
+  y <- h$counts
+  y <- y/max(y)
+  rect(breaks[-nB], 0, breaks[-1], y, col = "white", ...)
+}
+```
+```{r}
+pairs(
+  c2009_num,
+  upper.panel = panel.cor,
+  diag.panel = panel.hist,
+  lower.panel = panel.smooth
+)
+```
+```{r}
+panel.lm <- function (x, y, col = par("col"), bg = NA, pch = par("pch"),
+                      cex = 1, col.smooth = "black", ...) {
+  points(x, y, pch = pch, col = col, bg = bg, cex = cex)
+  abline(stats::lm(y ~ x),  col = col.smooth, ...)
+}
+```
+```{r}
+pairs(
+  c2009_num,
+  upper.panel = panel.cor,
+  diag.panel = panel.hist,
+  lower.panel = panel.smooth,
+  pch = "."
+)
+```
+

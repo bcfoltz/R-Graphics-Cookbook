@@ -1,0 +1,285 @@
+---
+title: 'R Graphics Cookbook: Chapter 6'
+author: "Brandon Foltz"
+date: "2023-03-20"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(MASS)
+```
+```{r}
+ggplot(faithful, aes(x = waiting)) +
+  geom_histogram()
+
+ggplot(faithful, aes(x = waiting)) +
+  geom_histogram(binwidth = 5, fill = "white", color = "black")
+
+binsize <- diff(range(faithful$waiting))/15
+
+ggplot(faithful, aes(x = waiting)) +
+  geom_histogram(binwidth = binsize, fill = "white", color = "black")
+```
+
+Multiple Histograms
+```{r}
+ggplot(birthwt, aes(x = bwt)) +
+  geom_histogram(fill = "white", color = "black") +
+  facet_grid(smoke ~ .)
+
+birthwt_mod <- birthwt
+
+birthwt_mod$smoke <- recode_factor(birthwt_mod$smoke, '0' = 'No Smoke', '1' = 'Smoke')
+```
+
+```{r}
+ggplot(birthwt_mod, aes(x = bwt)) +
+  geom_histogram(fill = "white", color = "black") +
+  facet_grid(smoke ~ .)
+
+ggplot(birthwt, aes(x = bwt)) +
+  geom_histogram(fill = "white", color = "black") +
+  facet_grid(race ~ .)
+
+ggplot(birthwt, aes(x = bwt)) +
+  geom_histogram(fill = "white", color = "black") +
+  facet_grid(race ~., scales = "free")
+
+ggplot(birthwt_mod, aes(x = bwt, fill = smoke)) +
+  geom_histogram(position = "identity", alpha = 0.4)
+```
+
+Density Curve
+```{r}
+ggplot(faithful, aes(x = waiting)) +
+  geom_density()
+
+ggplot(faithful, aes(x = waiting)) +
+  geom_line(stat = "density") +
+  expand_limits(y = 0)
+```
+```{r}
+ggplot(faithful, aes(x = waiting)) +
+  geom_line(stat = "density") +
+  geom_line(stat = "density", adjust = .25, color = "orange") + # less smooth
+  geom_line(stat = "density", adjust = 2, color = "blue") # more smooth
+```
+```{r}
+ggplot(faithful, aes(x = waiting)) +
+  geom_density(fill = "blue", alpha = .2) +
+  xlim(35, 105)
+
+ggplot(faithful, aes(x = waiting)) +
+  geom_density(fill = "blue", alpha = 0.2, color = NA) +
+  xlim(35, 105) +
+  geom_line(stat = "density")
+```
+To solve this problem, you can scale down the histogram to match the density curve with the mapping y = ..density... Here we’ll add geom_histogram() first, and then layer geom_density() on top.
+
+```{r}
+ggplot(faithful, aes(x = waiting, y = ..density..)) +
+  geom_histogram(fill = "cornsilk", color = "grey60", size = 0.2) +
+  geom_density() +
+  xlim(35, 105)
+```
+
+Multiple Density Curves from Grouped Data
+
+```{r}
+birthwt_mod <- birthwt|>
+  mutate(smoke = as.factor(smoke))
+
+ggplot(birthwt_mod,
+       aes(x = bwt, color = smoke)) +
+  geom_density()
+
+ggplot(birthwt_mod,
+       aes(x = bwt, fill = smoke)) +
+  geom_density(alpha = 0.3)
+```
+```{r}
+ggplot(birthwt_mod,
+       aes(x = bwt)) +
+  geom_density() +
+  facet_grid(smoke ~ .)
+
+#levels(birthwt_mod$smoke)
+
+birthwt_mod$smoke <- recode(birthwt_mod$smoke, '0' = 'No Smoke', '1' = 'Smoke')
+
+ggplot(birthwt_mod, aes(x = bwt)) +
+  geom_density() +
+  geom_vline(xintercept = median(birthwt_mod$bwt)) +
+  facet_grid(smoke ~ .)
+```
+```{r}
+ggplot(birthwt_mod,
+       aes(x = bwt, y = ..density..)) +
+  geom_histogram(binwidth = 200, fill = "cornsilk", color = "grey60", size = 0.2) +
+  geom_density() +
+  facet_grid(smoke ~ .)
+```
+
+Frequency Polygon
+
+```{r}
+ggplot(faithful, aes(x = waiting)) +
+  geom_freqpoly()
+
+ggplot(faithful, aes(x = waiting)) +
+  geom_freqpoly(binwidth = 4)
+
+binsize <- diff(range(faithful$waiting))/15
+
+ggplot(faithful, aes(x = waiting)) +
+  geom_freqpoly(binwidth = binsize)
+```
+
+Box Plots
+```{r}
+ggplot(birthwt, aes(x = factor(race), y = bwt)) +
+  geom_boxplot()
+
+ggplot(birthwt, aes(x = factor(race), y = bwt)) +
+  geom_boxplot(width = 0.5)
+
+ggplot(birthwt, aes(x = factor(race), y = bwt)) +
+  geom_boxplot(outlier.size = 1.5, outlier.shape = 21, outlier.color = "red")
+
+ggplot(birthwt, aes(x = 1, y = bwt)) +
+  geom_boxplot() +
+  scale_x_continuous(breaks = NULL) +
+  theme(axis.title.x = element_blank())
+```
+
+Notched Box Plot
+
+```{r}
+ggplot(birthwt, aes(x = factor(race), y = bwt)) +
+  geom_boxplot(notch = TRUE)
+```
+
+Adding Means to a Boxplot
+
+```{r}
+ggplot(birthwt, aes(x = factor(race), y = bwt)) +
+  geom_boxplot() +
+  stat_summary(fun.y = "mean", geom = "point", shape = 23, size = 3, fill = "red")
+```
+
+Violin Plot
+
+```{r}
+hw_p <- ggplot(heightweight, aes(x = sex, y = heightIn))
+
+hw_p + geom_violin()
+
+hw_p +
+  geom_violin() +
+  geom_boxplot(width = 0.1, fill = "black", outlier.colour = NA) +
+  stat_summary(fun.y = median, geom = "point", fill = "white", shape = 21, size = 2.5)
+
+hw_p + geom_violin(trim = FALSE)
+
+hw_p + geom_violin(scale = "count")
+
+hw_p + geom_violin(adjust = 2)
+
+hw_p + geom_violin(adjust = .5)
+```
+
+Dot Plot
+
+```{r}
+c2009 <- countries|>
+  filter(Year == 2009 & healthexp > 2000)
+
+c2009_p <- ggplot(c2009, aes(infmortality))
+
+c2009_p + geom_dotplot()
+
+c2009_p + geom_dotplot(binwidth = 0.25) +
+  geom_rug() +
+  scale_y_continuous(breaks = NULL) +
+  theme(axis.title.y = element_blank())
+
+c2009_p +
+  geom_dotplot(method = "histodot", binwidth = 0.25) +
+  geom_rug() +
+  scale_y_continuous(breaks = NULL) +
+  theme(axis.title.y = element_blank())
+```
+Center stacking
+
+```{r}
+c2009_p +
+  geom_dotplot(binwidth = 0.25, stackdir = "center") +
+  scale_y_continuous(breaks = NULL) +
+  theme(axis.title.y = element_blank())
+
+c2009_p +
+  geom_dotplot(binwidth = 0.25, stackdir = "centerwhole") +
+  scale_y_continuous(breaks = NULL) +
+  theme(axis.title.y = element_blank())
+```
+
+Multple Dot Plots
+
+```{r}
+ggplot(heightweight, aes(x = sex, y = heightIn)) +
+  geom_dotplot(binaxis = "y", binwidth = 0.5, stackdir = "center")
+
+ggplot(heightweight, aes(x = sex, y = heightIn)) +
+  geom_boxplot(outlier.colour = NA, width = 0.4) +
+  geom_dotplot(binaxis = "y", binwidth = 0.5, stackdir = "center", fill = NA)
+```
+```{r}
+ggplot(heightweight, aes(x = sex, y = heightIn)) +
+  geom_boxplot(aes(x = as.numeric(sex) + .2, group = sex), width = .25) +
+  geom_dotplot(
+    aes(x = as.numeric(sex) - .2, group = sex),
+    binaxis = "y",
+    binwidth = .5,
+    stackdir = "center"
+  ) +
+  scale_x_continuous(
+    breaks = 1:nlevels(heightweight$sex),
+    labels = levels(heightweight$sex)
+  )
+```
+
+Density Plot 2d
+
+```{r}
+faithful_p <- ggplot(faithful, aes(x = eruptions, y = waiting))
+
+faithful_p +
+  geom_point() +
+  stat_density2d()
+
+faithful_p +
+  stat_density2d(aes(color = ..level..))
+
+faithful_p +
+  stat_density2d(aes(fill = ..density..), geom = "raster", contour = FALSE)
+
+faithful_p + 
+  geom_point() +
+  stat_density2d(aes(fill = ..density..), geom = "raster", contour = FALSE)
+
+faithful_p +
+  geom_point() +
+  stat_density2d(aes(alpha = ..density..), geom = "tile", contour = FALSE)
+
+faithful_p +
+  stat_density2d(
+    aes(fill = ..density..),
+    geom = "raster", 
+    contour = FALSE,
+    h = c(.5, 5)
+  )
+  
+```
+
