@@ -1,0 +1,229 @@
+---
+title: 'R Graphics Cookbook: Chapter 7'
+author: "Brandon Foltz"
+date: "2023-03-20"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(gcookbook)
+library(grid)
+```
+```{r}
+p <- ggplot(faithful, aes(x = eruptions, y = waiting)) +
+  geom_point()
+
+p + 
+  annotate("text", x = 3, y = 48, label = "Group 1") +
+  annotate("text", x = 4.5, y = 66, label = "Group 2")
+```
+
+```{r}
+p +
+  annotate("text", x = 3, y = 48, label = "Group 1",
+           family = "serif", fontface = "italic", color = "darkred", size = 3) +
+  annotate("text", x = 4.5, y = 66, label = "Group 2", family = "serif",
+           fontface = "italic", color = "darkred", size = 3)
+```
+```{r}
+p +
+  annotate("text", x = 3, y = 48, label = "Group 1", alpha = 0.1) +
+  geom_text(x = 4.5, y = 66, label = "Group 2", alpha = 0.1)
+```
+```{r}
+p +
+  annotate("text", x = -Inf, y = Inf, label = "Upper left", hjust = -0.2, vjust = 2) +
+  annotate("text", x = mean(range(faithful$eruptions)), y = -Inf, vjust = -0.4, label = "Bottom middle")
+```
+
+Mathematical Expressions
+```{r}
+p <- ggplot(data.frame(x = c(-3,3)), aes(x = x)) +
+  stat_function(fun = dnorm)
+
+p +
+  annotate("text", x = 2, y = 0.3, parse = TRUE,
+           label = "frac(1, sqrt(2 * pi)) * e ^ {-x^2 / 2}")
+
+p +
+  annotate("text", x = 0, y = 0.05, parse = TRUE, size = 4,
+           label = "'Function: ' * y==frac(1, sqrt(2*pi)) * e^{-x^2/2}")
+```
+
+Adding Lines
+```{r}
+hw_plot <- ggplot(heightweight, aes(x = ageYear, y = heightIn, color = sex)) +
+  geom_point()
+
+hw_plot +
+  geom_hline(yintercept = 60) +
+  geom_vline(xintercept = 14)
+
+hw_plot +
+  geom_abline(intercept = 37.4, slope = 1.75)
+```
+
+```{r}
+hw_means <- heightweight|>
+  group_by(sex)|>
+  summarise(heightIn = mean(heightIn))
+
+hw_means
+
+hw_plot +
+  geom_hline(
+    data = hw_means,
+    aes(yintercept = heightIn, color = sex),
+    linetype = "dashed",
+    size = 1
+  )
+```
+```{r}
+pg_plot <- ggplot(PlantGrowth, aes(x = group, y = weight)) +
+  geom_point()
+
+pg_plot +
+  geom_vline(xintercept = 2)
+
+pg_plot +
+  geom_vline(xintercept = which(levels(PlantGrowth$group) == "ctrl"))
+```
+
+Adding Line Segments and Arrows
+
+```{r}
+p <- ggplot(filter(climate, Source == "Berkeley"), aes(x = Year, y = Anomaly10y)) +
+  geom_line()
+
+p +
+  annotate("segment", x = 1950, xend = 1980, y = -.25, yend = -.25)
+```
+```{r}
+p +
+  annotate("segment", x = 1850, xend = 1820, y = -.8, yend = -.95,
+           color = "blue", size = 2, arrow = arrow()) +
+  annotate("segment", x = 1950, xend = 1980, y = -.25, yend = -.25,
+           arrow = arrow(ends = "both", angle = 90, length = unit(.2, "cm")))
+```
+
+Shaded Rectangle
+```{r}
+p <- ggplot(filter(climate, Source == "Berkeley"), aes(x = Year, y = Anomaly10y)) +
+  geom_line()
+
+p +
+  annotate("rect", xmin = 1950, xmax = 1980, ymin = -1, ymax = 1, alpha = .1, fill = "blue")
+```
+
+Highlighting an Item
+```{r}
+pg_mod <- PlantGrowth|>
+  mutate(h1 = recode(group, "ctrl" = "no", "trt1" = "no", "trt2" = "yes"))
+
+ggplot(pg_mod, aes(x = group, y = weight, fill = h1)) +
+  geom_boxplot() +
+  scale_fill_manual(values = c("grey85", "#FFDDCC"), guide = FALSE)
+```
+```{r}
+ggplot(PlantGrowth, aes(x = group, y = weight, fill = group)) +
+  geom_boxplot() +
+  scale_fill_manual(values = c("grey85", "grey85", "#FFDDCC"), guide = FALSE)
+```
+
+Adding Error Bars
+
+```{r}
+ce_mod <- cabbage_exp|>
+  filter(Cultivar == "c39")
+
+ggplot(ce_mod, aes(x = Date, y = Weight)) +
+  geom_col(fill = "white", color = "black") +
+  geom_errorbar(aes(ymin = Weight - se, ymax = Weight + se), width = .2)
+
+ggplot(ce_mod, aes(x = Date, y = Weight)) +
+  geom_line(aes(group = 1)) +
+  geom_point(size = 4) +
+  geom_errorbar(aes(ymin = Weight - se, ymax = Weight + se), width = .2)
+```
+
+```{r}
+ggplot(cabbage_exp, aes(x = Date, y = Weight, fill = Cultivar)) +
+  geom_col(position = "dodge") +
+  geom_errorbar(aes(ymin = Weight - se, ymax = Weight + se),
+                position = "dodge", width = 0.2)
+
+ggplot(cabbage_exp, aes(x = Date, y = Weight, fill = Cultivar)) +
+  geom_col(position = "dodge") +
+  geom_errorbar(aes(ymin = Weight - se, ymax = Weight + se),
+                position = position_dodge(0.9), width = 0.2)
+```
+
+```{r}
+pd <- position_dodge(.3)
+
+ggplot(cabbage_exp, aes(x = Date, y = Weight, color = Cultivar, group = Cultivar)) +
+  geom_errorbar(
+    aes(ymin = Weight - se, ymax = Weight + se),
+    width = 0.2,
+    size = 0.25,
+    color = "black",
+    position = pd
+  ) +
+  geom_line(position = pd) +
+  geom_point(position = pd, size = 2.5)
+```
+
+Adding Annotations to Individual Facets
+```{r}
+mpg_plot <- ggplot(mpg, aes(x = displ, y = hwy)) +
+  geom_point() +
+  facet_grid(. ~ drv)
+
+f_labels <- data.frame(drv = c("4", "f", "r"), label = c("4wd", "Front", "Rear"))
+
+mpg_plot +
+  geom_text(x = 6, y = 40, aes(label = label), data = f_labels)
+
+mpg_plot +
+  annotate("text", x = 6, y = 42, label = "label text")
+```
+
+Labels function
+
+```{r}
+# This function returns a data frame with strings representing the regression
+# equation, and the r^2 value.
+# These strings will be treated as R math expressions
+lm_labels <- function(dat) {
+  mod <- lm(hwy ~ displ, data = dat)
+  formula <- sprintf("italic(y) == %.2f %+.2f * italic(x)",
+                     round(coef(mod)[1], 2), round(coef(mod)[2], 2))
+  r <- cor(dat$displ, dat$hwy)
+  r2 <- sprintf("italic(R^2) == %.2f", r^2)
+  data.frame(formula = formula, r2 = r2, stringsAsFactors = FALSE)
+}
+
+library(dplyr)
+labels <- mpg %>%
+  group_by(drv) %>%
+  do(lm_labels(.))
+
+labels
+#> # A tibble: 3 × 3
+#> # Groups:   drv [3]
+#>   drv   formula                              r2                 
+#>   <chr> <chr>                                <chr>              
+#> 1 4     italic(y) == 30.68 -2.88 * italic(x) italic(R^2) == 0.65
+#> 2 f     italic(y) == 37.38 -3.60 * italic(x) italic(R^2) == 0.36
+#> 3 r     italic(y) == 25.78 -0.92 * italic(x) italic(R^2) == 0.04
+
+# Plot with formula and R^2 values
+mpg_plot +
+  geom_smooth(method = lm, se = FALSE) +
+  geom_text(data = labels, aes(label = formula), x = 3, y = 40, parse = TRUE, hjust = 0) +
+  geom_text(x = 3, y = 35, aes(label = r2), data = labels, parse = TRUE, hjust = 0)
+#> `geom_smooth()` using formula = 'y ~ x'
+```
+
