@@ -1,0 +1,146 @@
+---
+title: 'R Graphics Cookbook: Chapter 9'
+author: "Brandon Foltz"
+date: "2023-03-22"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(gcookbook)
+```
+
+```{r}
+hw_plot <- ggplot(heightweight, aes(x = ageYear, y = heightIn)) +
+  geom_point()
+
+hw_plot + ggtitle("Age and Weight of Schoolchildren")
+
+hw_plot + ggtitle("Age and Weight\nof School Children")
+
+hw_plot + ggtitle("Age and Weight of School Children", "Ages 11.5 to 17.5 years")
+
+hw_plot + ggtitle("Age and Height of Schoolchildren") +
+  theme(plot.title = element_text(vjust = -8))
+
+hw_plot + annotate("text", 
+                   x = mean(range(heightweight$ageYear)), y = Inf,
+label = "Age and Height of Schoolchildren", vjust = 1.5, size = 4.5)
+```
+Changing the Appearance of Text
+
+```{r}
+hw_plot <- ggplot(heightweight, aes(x = ageYear, y = heightIn)) +
+  geom_point()
+
+hw_plot +
+  theme(axis.title.x = element_text(
+    size = 16, lineheight = 0.9,
+    family = "Times", face = "bold.italic", color = "red"
+  ))
+
+hw_plot +
+  ggtitle("Age and Height\nof Schoolchildren") +
+  theme(plot.title = element_text(
+    size = rel(1.5), lineheight = 0.9,
+    family = "Times", face = "bold.italic", color = "red"
+  ))
+```
+Inside the Plot
+```{r}
+hw_plot +
+  annotate("text", x = 15, y = 53, label = "Some text",
+           size = 7, family = "Times", fontface = "bold.italic", color = "red")
+
+hw_plot +
+  geom_text(aes(label = weightLb), size = 4, family = "Times", color = "red")
+```
+
+Using Themes
+
+```{r}
+hw_plot + theme_grey()
+
+hw_plot + theme_bw()
+
+hw_plot + theme_minimal()
+
+hw_plot + theme_classic()
+
+hw_plot + theme_void()
+```
+
+Changing Theme Elements
+
+```{r}
+hw_plot  <- ggplot(heightweight, aes(x = ageYear, y = heightIn, color = sex)) +
+  geom_point()
+
+hw_plot + theme(
+  panel.grid.major = element_line(color = "red"),
+  panel.grid.minor = element_line(color = "red", linetype = "dashed", size = 0.2),
+  panel.background = element_rect(fill = "lightblue"),
+  panel.border = element_rect(colour = "blue", fill = NA, size = 2)
+)
+
+hw_plot +
+  theme(
+    legend.background = element_rect(fill = "grey85", color = "red", size = 1),
+    legend.title = element_text(color = "blue", face = "bold", size = 14),
+    legend.text = element_text(color = "red"),
+    legend.key = element_rect(color = "blue", size = 0.25)
+  )
+
+hw_plot +
+  ggtitle("Plot Title Here") +
+  theme(
+    axis.title.x = element_text(color = "red", size = 14),
+    axis.text.x = element_text(color = "blue"),
+    axis.title.y = element_text(color = "red", size = 14, angle = 90),
+    axis.text.y = element_text(color = "blue"),
+    plot.title = element_text(color = "red", size = 20, face = "bold")
+  )
+
+hw_plot +
+  facet_grid(sex ~ .) +
+  theme(
+    strip.background = element_rect(fill = "pink"),
+    strip.text.y = element_text(size = 14, angle = -90, face = "bold")
+  )
+```
+
+Creating Themes
+
+```{r}
+mytheme <- theme_bw() +
+  theme(
+    text = element_text(color = "darkblue"),
+    axis.title = element_text(size = rel(1.25))
+  )
+
+hw_plot <- ggplot(heightweight, aes(x = ageYear, y = heightIn)) +
+  geom_point()
+
+hw_plot + mytheme
+```
+
+Hiding Grid Lines
+
+```{r}
+hw_plot <- ggplot(heightweight, aes(x = ageYear, y = heightIn)) +
+  geom_point()
+
+hw_plot +
+  theme(
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank()
+  )
+
+hw_plot +
+  theme(
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.y = element_blank()
+  )
+```
+

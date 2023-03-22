@@ -1,0 +1,199 @@
+---
+title: 'R Graphics Cookbook: Chapter 10'
+author: "Brandon Foltz"
+date: "2023-03-22"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(grid)
+```
+```{r}
+pg_plot <- ggplot(PlantGrowth, aes(x = group, y = weight, fill  = group)) +
+  geom_boxplot()
+
+pg_plot
+
+pg_plot +
+  guides(fill = FALSE)
+```
+```{r}
+pg_plot +
+  theme(legend.position = "top")
+
+pg_plot +
+  theme(legend.position = c(.8, .3))
+
+pg_plot + theme(legend.position = c(1,0), legend.justification = c(1,0)) # bottom right
+
+pg_plot + theme(legend.position = c(1,1), legend.justification = c(1,1)) # top right
+
+pg_plot +
+  theme(legend.position = c(.85, .20)) +
+  theme(legend.background = element_rect(fill = "white", color = "black"))
+
+pg_plot +
+  theme(legend.position = c(.85, .2)) +
+  theme(legend.background = element_blank()) +
+  theme(legend.key = element_blank())
+```
+Changing the Order of Items in a Legend
+
+```{r}
+pg_plot <- ggplot(PlantGrowth, aes(x = group, y = weight, fill = group)) +
+  geom_boxplot()
+
+pg_plot
+
+pg_plot +
+  scale_fill_discrete(limits = c("trt1", "trt2", "ctrl"))
+
+pg_plot +
+  scale_fill_grey(start = .5, end = 1, limits = c("trt1", "trt2", "ctrl"))
+```
+
+Reversing the Order of Items in a Legend
+
+```{r}
+pg_plot <- ggplot(PlantGrowth, aes(x = group, y = weight, fill = group)) +
+  geom_boxplot()
+
+pg_plot
+
+pg_plot +
+  guides(fill = guide_legend(reverse = TRUE))
+```
+
+Changing a Legend Title
+
+```{r}
+pg_plot +
+  labs(fill = "Condition")
+```
+```{r}
+hw_plot <- ggplot(heightweight, aes(x = ageYear, y = heightIn, color = sex)) +
+  geom_point(aes(size = weightLb)) +
+  scale_size_continuous(range = c(1 ,4))
+
+hw_plot
+
+hw_plot +
+  labs(color = "Male/Female", size = "Weight\n(pounds)")
+
+hw_plot2 <- ggplot(heightweight, aes(x = ageYear, y = heightIn, shape = sex, color = sex)) + geom_point()
+
+hw_plot2
+
+hw_plot2 + labs(shape = "Male / Female")
+
+hw_plot + labs(shape = "Male / Female", color = "Male / Female")
+
+hw_plot + 
+  guides(fill = guide_legend(title = "Condition"))
+```
+
+Changing the Appearance of a Legend Title
+
+```{r}
+pg_plot <- ggplot(PlantGrowth, aes(x = group, y = weight, fill = group)) +
+  geom_boxplot()
+
+pg_plot +
+  theme(legend.title = element_text(
+    face = "italic",
+    family = "Times",
+    color = "red",
+    size = 14)
+  )
+
+pg_plot +
+  guides(fill = guide_legend(title.theme = element_text(
+    face = "italic",
+    family = "times",
+    color = "red",
+    size = 14
+  )))
+```
+
+Removing a Legend Title
+
+```{r}
+ggplot(PlantGrowth, aes(x = group, y = weight, fill = group)) +
+  geom_boxplot() +
+  guides(fill = guide_legend(title = NULL))
+```
+
+Changing the Labels in a Legend
+
+```{r}
+pg_plot <- ggplot(PlantGrowth, aes(x = group, y = weight, fill = group)) +
+  geom_boxplot()
+
+pg_plot +
+  scale_fill_discrete(labels = c("Control", "Treatment 1", "Treatment 2"))
+
+pg_plot +
+  scale_fill_grey(
+    start = 0.5, end = 1, labels = c("Control", "Treatment 1", "Treatment 2")
+  )
+
+pg_plot +
+  scale_fill_discrete(
+    limits = c("trt1", "trt2", "ctrl"),
+    labels = c("Treatment 1", "Treatment 2", "Control")
+  )
+```
+```{r}
+hw_plot <- ggplot(heightweight, aes(x = ageYear, heightIn, shape = sex, color = sex)) +
+  geom_point()
+
+hw_plot
+
+hw_plot + scale_shape_discrete(labels = c("Female", "Male"))
+
+hw_plot +
+  scale_shape_discrete(labels = c("Female", "Male")) +
+  scale_color_discrete(labels = c("Female", "Male"))
+```
+
+Changing the Appearance of Legend Labels
+
+```{r}
+pg_plot <- ggplot(PlantGrowth, aes(x = group, y = weight, fill = group)) +
+  geom_boxplot()
+
+pg_plot +
+  theme(legend.text = element_text(
+    face = "italic",
+    family = "Times",
+    color = "red",
+    size = 14
+  ))
+
+pg_plot +
+  guides(fill = guide_legend(title.theme = element_text(
+    face = "italic",
+    family = "times",
+    color = "red",
+    size = 14
+  )))
+```
+
+Using Labels with Multiple Lines of Text
+
+```{r}
+pg_plot <- ggplot(PlantGrowth, aes(x = group, y = weight, fill = group)) +
+  geom_boxplot()
+
+pg_plot +
+  scale_fill_discrete(labels = c("Control", "Type 1\ntreatment", "Type 2\ntreatment"))
+
+# grid package
+
+pg_plot +
+  scale_fill_discrete(labels = c("Control", "Type 1\ntreatment", "Type 2\ntreatment")) +
+  theme(legend.text = element_text(lineheight = .8), legend.key.height = unit(1, "cm"))
+```
+
