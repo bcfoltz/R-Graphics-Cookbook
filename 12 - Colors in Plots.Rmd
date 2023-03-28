@@ -1,0 +1,173 @@
+---
+title: 'R Graphics Cookbook: Chapter 12'
+author: "Brandon Foltz"
+date: "2023-03-26"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(MASS)
+library(gcookbook)
+library(viridis)
+library(RColorBrewer)
+library(scales)
+```
+Setting the colors of objects
+```{r}
+ggplot(birthwt, aes(x = bwt)) +
+  geom_histogram(fill = "orange", color = "black")
+
+ggplot(mtcars, aes(x = wt, y = mpg)) +
+  geom_point(color = "orange")
+```
+
+Representing Variables with Color
+
+```{r}
+ggplot(cabbage_exp, aes(x = Date, y = Weight, fill = Cultivar)) +
+  geom_col(color = "black", position = "dodge")
+
+ggplot(cabbage_exp, aes(x = Date, y = Weight)) +
+  geom_col(aes(fill = Cultivar), color = "black", position = "dodge")
+
+ggplot(mtcars, aes(x = wt, y = mpg, color = cyl)) +
+  geom_point()
+
+ggplot(mtcars, aes(x = wt, y = mpg)) +
+  geom_point(aes(color = cyl))
+```
+Converting to a Factor
+```{r}
+ggplot(mtcars, aes(x = wt, y = mpg, color = factor(cyl))) +
+  geom_point()
+
+mtcars_mod <- mtcars|>
+  mutate(cyl = as.factor(cyl))
+
+ggplot(mtcars_mod, aes(x = wt, y = mpg, color = cyl)) +
+  geom_point()
+```
+
+Using a Colorlind-Friendly Palette (Viridis)
+
+You will need to add scale_fill_viridis_c() to your plot if your data is continuous. If your data is discrete you will need to use scale_fill_viridis_d() instead.
+
+```{r}
+uspopage_plot <- ggplot(uspopage, aes(x = Year, y = Thousands, fill = AgeGroup)) +
+  geom_area()
+
+uspopage_plot + scale_fill_viridis_d()
+```
+
+Using a Different Palette for a Discrete Variable
+
+```{r}
+uspopage_plot <- ggplot(uspopage, aes(x = Year, y = Thousands, fill = AgeGroup)) +
+  geom_area()
+
+uspopage_plot
+
+uspopage_plot +
+  scale_fill_viridis(discrete = TRUE)
+
+uspopage_plot +
+  scale_fill_brewer()
+```
+
+```{r}
+hw_splot <- ggplot(heightweight, aes(x = ageYear, y = heightIn, color = sex)) +
+  geom_point()
+
+hw_splot
+
+hw_splot +
+  scale_color_hue(l = 45)
+```
+```{r}
+display.brewer.all()
+```
+```{r}
+hw_splot +
+  scale_color_brewer(palette = "Oranges") +
+  theme_bw()
+
+hw_splot +
+  scale_color_grey()
+
+hw_splot +
+  scale_color_grey(start = 0.7, end = 0)
+```
+
+Using a Manually Defined Palette for a Discrete Variable
+
+```{r}
+hw_plot <- ggplot(heightweight, aes(x = ageYear, y = heightIn, color = sex)) +
+  geom_point()
+
+hw_plot + scale_color_manual(values = c("orange", "lightblue"))
+
+hw_plot + scale_color_manual(values = c("#CC6666", "#7777DD"))
+
+hw_plot + scale_color_manual(values = c("#440154FF", "#FDE725FF")) +
+  theme_bw()
+
+hw_plot + scale_color_manual(values = c(m = "lightblue", f = "orange"))
+```
+```{r}
+viridis(2)
+inferno(5)
+```
+Using a Manually Defined Palette for a Continuous Variable
+
+```{r}
+hw_plot <- ggplot(heightweight, aes(x = ageYear, heightIn, color = weightLb)) +
+  geom_point(size = 3)
+
+hw_plot
+
+hw_plot +
+  scale_color_gradient2(
+    low = muted("red"),
+    mid = "white",
+    high = muted("blue"),
+    midpoint = 110
+  )
+
+hw_plot +
+  scale_color_gradient(low = "black", high = "white")
+
+hw_plot +
+  scale_color_gradientn(colors = c("darkred", "orange", "yellow", "white"))
+```
+Coloring a Shaded Region Based on Value
+
+```{r}
+climate_mod <- climate|>
+  filter(Source == "Berkeley")|>
+  mutate(valence = if_else(Anomaly10y >= 0, "pos", "neg"))
+
+climate_mod
+
+ggplot(climate_mod, aes(x = Year, y = Anomaly10y)) +
+  geom_area(aes(fill = valence)) +
+  geom_line() +
+  geom_hline(yintercept = 0)
+```
+```{r}
+interp <- approx(climate_mod$Year, climate_mod$Anomaly10y, n = 1000)
+
+cbi <- data.frame(Year = interp$x, Anomaly10y = interp$y)|>
+  mutate(valence = if_else(Anomaly10y >= 0, "pos", "neg"))
+
+ggplot(cbi, aes(x = Year, y = Anomaly10y)) +
+  geom_area(aes(fill = valence), alpha = 0.4) +
+  geom_line() +
+  geom_hline(yintercept = 0) +
+  scale_fill_manual(values = c("#CCEEFF", "#FFDDDD"), guide = "none") +
+  scale_x_continuous(expand = c(0,0)) +
+  theme_bw()
+```
+
+
