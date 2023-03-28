@@ -1,0 +1,108 @@
+---
+title: "R Graphics Cookbook"
+author: "Brandon Foltz"
+date: "2023-03-28"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(patchwork)
+```
+
+```{r}
+pdf("myplot.pdf", width = 4, height = 4)
+
+plot(mtcars$wt, mtcars$mpg)
+print(ggplot(mtcars, aes(x = wt, y = mpg)) + geom_point())
+
+dev.off()
+```
+```{r}
+plot1 <- ggplot(mtcars, aes(x = wt, y = mpg)) +
+  geom_point()
+
+ggsave("myplot2.pdf", plot1, width = 8, height = 8, units = "cm")
+```
+SVG
+
+```{r}
+library(svglite)
+
+# With ggsave()
+ggsave("myplot.svg", width = 8, height = 8, units = "cm")
+```
+WMF
+```{r}
+ggsave("myplot.wmf", width = 8, height = 8, units = "cm")
+```
+
+```{r}
+png("myplot.png", width = 400, height = 400)
+plot(mtcars$wt, mtcars$mpg)
+dev.off()
+```
+```{r}
+png("myplot-%d.png", width = 400, height = 400)
+
+plot(mtcars$wt, mtcars$mpg)
+print(ggplot(mtcars, aes(x = wt, y = mpg)) + geom_point())
+
+dev.off()
+```
+```{r}
+ppi <- 300
+
+png("myplot.png", width = 4*ppi, height = 4*ppi, res = ppi)
+plot(mtcars$wt, mtcars$mpg)
+dev.off()
+```
+```{r}
+ggplot(mtcars, aes(x = wt, y = mpg)) + geom_point()
+ggsave("myplot.png", width = 8, height = 8, unit = "cm", dpi = 300)
+```
+Fonts
+```{r}
+library(extrafont)
+font_import()
+fonts()
+loadfonts()
+#C:\Program Files\gs\gs10.01.1
+Sys.setenv(R_GSCMD = "C:/Program Files/gs/gs10.01.1/bin/gswin64.exe")
+```
+```{r}
+ggplot(mtcars, aes(x = wt, y = mpg)) + geom_point() +
+  ggtitle("Title text goes here") +
+  theme(text = element_text(size = 16, family = "Impact"))
+
+ggsave("myplot.pdf", width = 4, height = 4)
+
+embed_fonts("myplot.pdf")
+```
+```{r}
+loadfonts("win")
+```
+```{r}
+ggplot(mtcars, aes(x = wt, y = mpg)) + geom_point() +
+  ggtitle("Title text goes here") +
+  theme(text = element_text(size = 16, family = "Georgia", face = "italic"))
+ggsave("myplot.png", width = 4, height = 4, dpi = 300)
+```
+
+```{r}
+plot1 <- ggplot(PlantGrowth, aes(x = weight)) +
+  geom_histogram(bins = 12)
+
+plot2 <- ggplot(PlantGrowth, aes(x = group, y = weight, group = group)) +
+  geom_boxplot()
+
+plot1 + plot2
+
+plot3 <- ggplot(PlantGrowth, aes(x = weight, fill = group)) +
+  geom_density(alpha = 0.25)
+
+plot1 + plot2 + plot3 +
+  plot_layout(ncol = 2)
+```
+
